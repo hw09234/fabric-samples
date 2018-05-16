@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-# ---------------------------------------------------------------------------
-# "PeerOrgs" - Definition of organizations managing peer nodes
-# ---------------------------------------------------------------------------
+
+OrdererOrgs:
+  - Name: Orderer3
+    Domain: ord3.example.com
+    Template:
+      Count: 2
 PeerOrgs:
-  # ---------------------------------------------------------------------------
-  # Org3
-  # ---------------------------------------------------------------------------
   - Name: Org3
     Domain: org3.example.com
     EnableNodeOUs: true

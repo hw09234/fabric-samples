@@ -68,20 +68,21 @@ function printHelp () {
 
 # Ask user for confirmation to proceed
 function askProceed () {
-  read -p "Continue? [Y/n] " ans
-  case "$ans" in
-    y|Y|"" )
-      echo "proceeding ..."
-    ;;
-    n|N )
-      echo "exiting..."
-      exit 1
-    ;;
-    * )
-      echo "invalid response"
-      askProceed
-    ;;
-  esac
+  echo hello
+  # read -p "Continue? [Y/n] " ans
+  # case "$ans" in
+  #   y|Y|"" )
+  #     echo "proceeding ..."
+  #   ;;
+  #   n|N )
+  #     echo "exiting..."
+  #     exit 1
+  #   ;;
+  #   * )
+  #     echo "invalid response"
+  #     askProceed
+  #   ;;
+  # esac
 }
 
 # Obtain CONTAINER_IDS and remove them
@@ -244,7 +245,7 @@ function networkDown () {
     #Cleanup images
     removeUnwantedImages
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/org3.json
+    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/*.json
     # remove the docker-compose yaml file that was customized to the example
     rm -f docker-compose-e2e.yaml
   fi

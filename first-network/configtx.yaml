@@ -20,7 +20,8 @@ Profiles:
         Orderer:
             <<: *OrdererDefaults
             Organizations:
-                - *OrdererOrg
+                - *Orderer1
+                - *Orderer2
             Capabilities:
                 <<: *OrdererCapabilities
         Consortiums:
@@ -50,16 +51,29 @@ Organizations:
 
     # SampleOrg defines an MSP using the sampleconfig.  It should never be used
     # in production but may be used as a template for other definitions
-    - &OrdererOrg
+    - &Orderer1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: OrdererOrg
+        Name: Orderer1
 
         # ID to load the MSP definition as
-        ID: OrdererMSP
+        ID: Orderer1MSP
 
         # MSPDir is the filesystem path which contains the MSP configuration
-        MSPDir: crypto-config/ordererOrganizations/example.com/msp
+        MSPDir: crypto-config/ordererOrganizations/ord1.example.com/msp
+
+    # SampleOrg defines an MSP using the sampleconfig.  It should never be used
+    # in production but may be used as a template for other definitions
+    - &Orderer2
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        Name: Orderer2
+
+        # ID to load the MSP definition as
+        ID: Orderer2MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration
+        MSPDir: crypto-config/ordererOrganizations/ord2.example.com/msp
 
     - &Org1
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -107,10 +121,11 @@ Orderer: &OrdererDefaults
 
     # Orderer Type: The orderer implementation to start
     # Available types are "solo" and "kafka"
-    OrdererType: solo
+    OrdererType: kafka
 
     Addresses:
-        - orderer.example.com:7050
+        - orderer0.ord1.example.com:7050
+        - orderer0.ord2.example.com:7050
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s
@@ -134,7 +149,10 @@ Orderer: &OrdererDefaults
         # Brokers: A list of Kafka brokers to which the orderer connects
         # NOTE: Use IP:port notation
         Brokers:
-            - 127.0.0.1:9092
+            - kafka0:9092
+            - kafka1:9092
+            - kafka2:9092
+            - kafka3:9092
 
     # Organizations is the list of orgs which are defined as participants on
     # the orderer side of the network

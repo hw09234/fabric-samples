@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-
----
 ################################################################################
 #
 #   Section: Organizations
@@ -13,6 +11,16 @@
 #
 ################################################################################
 Organizations:
+    - &Orderer3
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+        Name: Orderer3
+
+        # ID to load the MSP definition as
+        ID: Orderer3MSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration
+        MSPDir: crypto-config/ordererOrganizations/ord3.example.com/msp
     - &Org3
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment

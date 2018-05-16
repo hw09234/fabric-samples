@@ -22,7 +22,7 @@ TIMEOUT="$4"
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
-ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/ord1.example.com/orderers/orderer0.ord1.example.com/msp/tlscacerts/tlsca.ord1.example.com-cert.pem
 
 CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
 if [ "$LANGUAGE" = "node" ]; then
@@ -36,15 +36,25 @@ echo
 echo "========= Creating config transaction to add org3 to network =========== "
 echo
 
-echo "Installing jq"
-apt-get -y update && apt-get -y install jq
+#echo "Installing jq"
+#apt-get -y update && apt-get -y install jq
 
 # Fetch the config for the channel, writing it to config.json
 fetchChannelConfig ${CHANNEL_NAME} config.json
 
 # Modify the configuration to append the new org
 set -x
-jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"Org3MSP":.[1]}}}}}' config.json ./channel-artifacts/org3.json > modified_config.json
+jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"Org3MSP":.[1]}}}}}' config.json ./channel-artifacts/org3.json > config1.json
+set +x
+
+# Modify the configuration to append the new orderer org
+set -x
+jq -s '.[0] * {"channel_group":{"groups":{"Orderer":{"groups": {"Orderer3MSP":.[1]}}}}}' config1.json ./channel-artifacts/ord3.json > config2.json
+set +x
+
+# Add the new orderer address
+set -x
+jq '.channel_group.values.OrdererAddresses.value.addresses=[.channel_group.values.OrdererAddresses.value.addresses[],"orderer0.ord3.example.com"]' config2.json > modified_config.json
 set +x
 
 # Compute a config update, based on the differences between config.json and modified_config.json, write it as a transaction to org3_update_in_envelope.pb
@@ -57,17 +67,18 @@ echo
 echo "Signing config transaction"
 echo
 signConfigtxAsPeerOrg 1 org3_update_in_envelope.pb
-
+signConfigtxAsOrdererOrg 1 org3_update_in_envelope.pb
+signConfigtxAsOrdererOrg 2 org3_update_in_envelope.pb
 echo
 echo "========= Submitting transaction from a different peer (peer0.org2) which also signs it ========= "
 echo
 setGlobals 0 2
 set -x
-peer channel update -f org3_update_in_envelope.pb -c ${CHANNEL_NAME} -o orderer.example.com:7050 --tls --cafile ${ORDERER_CA}
+peer channel update -f org3_update_in_envelope.pb -c ${CHANNEL_NAME} -o orderer0.ord1.example.com:7050 --tls --cafile ${ORDERER_CA}
 set +x
 
 echo
 echo "========= Config transaction to add org3 to network submitted! =========== "
 echo
-
+fetchChannelConfig ${CHANNEL_NAME} config_after.json
 exit 0

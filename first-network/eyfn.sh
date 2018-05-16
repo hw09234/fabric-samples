@@ -49,20 +49,21 @@ function printHelp () {
 
 # Ask user for confirmation to proceed
 function askProceed () {
-  read -p "Continue? [Y/n] " ans
-  case "$ans" in
-    y|Y|"" )
-      echo "proceeding ..."
-    ;;
-    n|N )
-      echo "exiting..."
-      exit 1
-    ;;
-    * )
-      echo "invalid response"
-      askProceed
-    ;;
-  esac
+  echo hello
+  # read -p "Continue? [Y/n] " ans
+  # case "$ans" in
+  #   y|Y|"" )
+  #     echo "proceeding ..."
+  #   ;;
+  #   n|N )
+  #     echo "exiting..."
+  #     exit 1
+  #   ;;
+  #   * )
+  #     echo "invalid response"
+  #     askProceed
+  #   ;;
+  # esac
 }
 
 # Obtain CONTAINER_IDS and remove them
@@ -96,6 +97,7 @@ function networkUp () {
     generateChannelArtifacts
     createConfigTx
   fi
+
   # start org3 peers
   if [ "${IF_COUCHDB}" == "couchdb" ]; then
       IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
@@ -143,7 +145,7 @@ function networkDown () {
     #Cleanup images
     removeUnwantedImages
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/org3.json
+    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/*.json
     # remove the docker-compose yaml file that was customized to the example
     rm -f docker-compose-e2e.yaml
   fi
@@ -210,6 +212,7 @@ function generateChannelArtifacts() {
    export FABRIC_CFG_PATH=$PWD
    set -x
    configtxgen -printOrg Org3MSP > ../channel-artifacts/org3.json
+   configtxgen -printOrg Orderer3 > ../channel-artifacts/ord3.json
    res=$?
    set +x
    if [ $res -ne 0 ]; then

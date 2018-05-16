@@ -6,16 +6,33 @@
 version: '2'
 
 services:
+  zookeeper:
+    image: hyperledger/fabric-zookeeper
+    restart: always
+    ports:
+      - '2181'
+      - '2888'
+      - '3888'
 
-  orderer.example.com:
-    container_name: orderer.example.com
+  kafka:
+    image: hyperledger/fabric-kafka
+    restart: always
+    environment:
+      - KAFKA_MESSAGE_MAX_BYTES=103809024 # 99 * 1024 * 1024 B
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024 # 99 * 1024 * 1024 B
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+    ports:
+      - '9092'
+
+  orderer0.ord1.example.com:
+    container_name: orderer0.ord1.example.com
     image: hyperledger/fabric-orderer:$IMAGE_TAG
     environment:
-      - ORDERER_GENERAL_LOGLEVEL=INFO
+      - ORDERER_GENERAL_LOGLEVEL=DEBUG
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
       - ORDERER_GENERAL_GENESISMETHOD=file
       - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
-      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPID=Orderer1MSP
       - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
       # enabled TLS
       - ORDERER_GENERAL_TLS_ENABLED=true
@@ -26,11 +43,86 @@ services:
     command: orderer
     volumes:
     - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
-    - ../crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
-    - ../crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
-    - orderer.example.com:/var/hyperledger/production/orderer
+    - ../crypto-config/ordererOrganizations/ord1.example.com/orderers/orderer0.ord1.example.com/msp:/var/hyperledger/orderer/msp
+    - ../crypto-config/ordererOrganizations/ord1.example.com/orderers/orderer0.ord1.example.com/tls/:/var/hyperledger/orderer/tls
+    #- orderer.example.com:/var/hyperledger/production/orderer
     ports:
       - 7050:7050
+
+  orderer0.ord2.example.com:
+    container_name: orderer0.ord2.example.com
+    image: hyperledger/fabric-orderer:$IMAGE_TAG
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=DEBUG
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=Orderer2MSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganizations/ord2.example.com/orderers/orderer0.ord2.example.com/msp:/var/hyperledger/orderer/msp
+    - ../crypto-config/ordererOrganizations/ord2.example.com/orderers/orderer0.ord2.example.com/tls/:/var/hyperledger/orderer/tls
+    #- orderer.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7150:7050
+
+  orderer0.ord3.example.com:
+    container_name: orderer0.ord3.example.com
+    image: hyperledger/fabric-orderer:$IMAGE_TAG
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=DEBUG
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=Orderer3MSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ../org3-artifacts/crypto-config/ordererOrganizations/ord3.example.com/orderers/orderer0.ord3.example.com/msp:/var/hyperledger/orderer/msp
+    - ../org3-artifacts/crypto-config/ordererOrganizations/ord3.example.com/orderers/orderer0.ord3.example.com/tls/:/var/hyperledger/orderer/tls
+    #- orderer.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7250:7050
+
+  # orderer0.ord4.example.com:
+  #   container_name: orderer0.ord4.example.com
+  #   image: hyperledger/fabric-orderer:$IMAGE_TAG
+  #   environment:
+  #     - ORDERER_GENERAL_LOGLEVEL=DEBUG
+  #     - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+  #     - ORDERER_GENERAL_GENESISMETHOD=file
+  #     - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+  #     - ORDERER_GENERAL_LOCALMSPID=Orderer4MSP
+  #     - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+  #     # enabled TLS
+  #     - ORDERER_GENERAL_TLS_ENABLED=true
+  #     - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+  #     - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+  #     - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+  #   working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+  #   command: orderer
+  #   volumes:
+  #   - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+  #   - ../crypto-config/ordererOrganizations/ord1.example.com/orderers/orderer0.ord4.example.com/msp:/var/hyperledger/orderer/msp
+  #   - ../crypto-config/ordererOrganizations/ord1.example.com/orderers/orderer0.ord4.example.com/tls/:/var/hyperledger/orderer/tls
+  #   #- orderer.example.com:/var/hyperledger/production/orderer
+  #   ports:
+  #     - 7350:7050
 
   peer0.org1.example.com:
     container_name: peer0.org1.example.com
@@ -47,7 +139,7 @@ services:
         - /var/run/:/host/var/run/
         - ../crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/fabric/tls
-        - peer0.org1.example.com:/var/hyperledger/production
+        #- peer0.org1.example.com:/var/hyperledger/production
     ports:
       - 7051:7051
       - 7053:7053
@@ -67,7 +159,7 @@ services:
         - /var/run/:/host/var/run/
         - ../crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls:/etc/hyperledger/fabric/tls
-        - peer1.org1.example.com:/var/hyperledger/production
+        #- peer1.org1.example.com:/var/hyperledger/production
 
     ports:
       - 8051:7051
@@ -88,7 +180,7 @@ services:
         - /var/run/:/host/var/run/
         - ../crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls:/etc/hyperledger/fabric/tls
-        - peer0.org2.example.com:/var/hyperledger/production
+        #- peer0.org2.example.com:/var/hyperledger/production
     ports:
       - 9051:7051
       - 9053:7053
@@ -108,7 +200,7 @@ services:
         - /var/run/:/host/var/run/
         - ../crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/msp:/etc/hyperledger/fabric/msp
         - ../crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls:/etc/hyperledger/fabric/tls
-        - peer1.org2.example.com:/var/hyperledger/production
+        #- peer1.org2.example.com:/var/hyperledger/production
     ports:
       - 10051:7051
       - 10053:7053
