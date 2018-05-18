@@ -84,34 +84,56 @@
 
    *step1Org3.sh中默认会执行`apt-get -y update && apt-get -y install jq`，如果不想每次测试都安装jq，可以编写Dockerfile将jq装上`hyperledger/fabric-tools`中*
 
-   ### 其他说明
+### 测试结果
 
-   脚本中有很多有用的地方可以学习参考，比如判断orderer服务是否启动
+添加组织3和组织4，其中对配置块的修改包括/Channel/Application, /Channel/Orderer, /Channel/OrdererAddress
 
-   ```
-   peer channel fetch 0 0_block.pb -o orderer0.ord1.example.com:7050 -c "testchainid" --tls --cafile $ORDERER_CA
-   ```
+|          | admin                            | any               | Custom            |
+| :------: | :------------------------------- | :---------------- | :---------------- |
+| Add org3 | peer2+orderer1=f;                | peer2+orderer1=t; | peer2+orderer1=t; |
+|          | peer2+orderer1+orderer2=f;       |                   |                   |
+|          | peer1+peer2+orderer1=f;          |                   |                   |
+|          | peer1+peer2+orderer1+orderer2=t; |                   |                   |
+| Add org4 | peer1+peer3+orderer1+orderer3=t; | peer3+orderer3=t; | peer2+orderer1=t; |
+|          |                                  |                   | peer2+orderer3=f; |
+|          |                                  |                   | peer3+orderer1=f; |
 
-   单独生成组织3的证书和配置
+表格说明：
 
-   ```
-   cryptogen generate --config=./org4-crypto.yaml
-   configtxgen -printOrg Org3MSP > ../channel-artifacts/org3.json
-   configtxgen -printOrg Orderer3MSP > ../channel-artifacts/ord3.json
-   ```
+ * f = false,即升级失败
+ * t = true,即升级成功
+ * peerX 表示peer org X，即用peer组织X的证书签名
+ * ordererX表示orderer org X，即用Orderer org X的签名
+ * `peer2+orderer1=f`表示config_update交易用peer org2和orderer org1的签名后仍然升级失败
 
-   通过configtxlator构建update交易（不启动http服务）
+### 其他说明
 
-   ```
-     configtxlator proto_encode --input "${ORIGINAL}" --type common.Config > original_config.pb
-     configtxlator proto_encode --input "${MODIFIED}" --type common.Config > modified_config.pb
-     configtxlator compute_update --channel_id "${CHANNEL}" --original original_config.pb --updated modified_config.pb > config_update.pb
-     configtxlator proto_decode --input config_update.pb  --type common.ConfigUpdate > config_update.json
-     echo '{"payload":{"header":{"channel_header":{"channel_id":"'$CHANNEL'", "type":2}},"data":{"config_update":'$(cat config_update.json)'}}}' | jq . > config_update_in_envelope.json
-     configtxlator proto_encode --input config_update_in_envelope.json --type common.Envelope > "${OUTPUT}"
-   ```
+脚本中有很多有用的地方可以学习参考，比如判断orderer服务是否启动
 
-   等等
+```
+peer channel fetch 0 0_block.pb -o orderer0.ord1.example.com:7050 -c "testchainid" --tls --cafile $ORDERER_CA
+```
+
+单独生成组织3的证书和配置
+
+```
+cryptogen generate --config=./org4-crypto.yaml
+configtxgen -printOrg Org3MSP > ../channel-artifacts/org3.json
+configtxgen -printOrg Orderer3MSP > ../channel-artifacts/ord3.json
+```
+
+通过configtxlator构建update交易（不启动http服务）
+
+```
+  configtxlator proto_encode --input "${ORIGINAL}" --type common.Config > original_config.pb
+  configtxlator proto_encode --input "${MODIFIED}" --type common.Config > modified_config.pb
+  configtxlator compute_update --channel_id "${CHANNEL}" --original original_config.pb --updated modified_config.pb > config_update.pb
+  configtxlator proto_decode --input config_update.pb  --type common.ConfigUpdate > config_update.json
+  echo '{"payload":{"header":{"channel_header":{"channel_id":"'$CHANNEL'", "type":2}},"data":{"config_update":'$(cat config_update.json)'}}}' | jq . > config_update_in_envelope.json
+  configtxlator proto_encode --input config_update_in_envelope.json --type common.Envelope > "${OUTPUT}"
+```
+
+等等
 
 
 
