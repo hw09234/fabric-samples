@@ -1,0 +1,19 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+OrdererOrgs:
+  - Name: Orderer4
+    Domain: ord4.example.com
+    Template:
+      Count: 2
+PeerOrgs:
+  - Name: Org4
+    Domain: org4.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 2
+    Users:
+      Count: 1

@@ -97,7 +97,7 @@ function networkUp () {
     generateChannelArtifacts
     createConfigTx
   fi
-
+  
   # start org3 peers
   if [ "${IF_COUCHDB}" == "couchdb" ]; then
       IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
@@ -112,7 +112,7 @@ function networkUp () {
   echo "###############################################################"
   echo "############### Have Org3 peers join network ##################"
   echo "###############################################################"
-  docker exec Org3cli ./scripts/step2org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+  docker exec cli ./scripts/step2org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to have Org3 peers join network"
     exit 1
@@ -127,11 +127,23 @@ function networkUp () {
     exit 1
   fi
   # finish by running the test
-  docker exec Org3cli ./scripts/testorg3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+  docker exec cli ./scripts/testorg3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to run test"
     exit 1
   fi
+
+  echo
+  echo "###############################################################"
+  echo "#####              Adding Org4 to network                 #####"
+  echo "###############################################################"
+  #generate org4 artifacts and add org4 into config block
+  if [ ! -d "org4-artifacts/crypto-config" ]; then
+    generateCertsOrg4
+    generateChannelArtifactsOrg4
+    createConfigTxOrg4
+  fi
+
 }
 
 # Tear down running network
@@ -145,7 +157,7 @@ function networkDown () {
     #Cleanup images
     removeUnwantedImages
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/*.json
+    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/*.json ./org4-artifacts/crypto-config/
     # remove the docker-compose yaml file that was customized to the example
     rm -f docker-compose-e2e.yaml
   fi
@@ -163,6 +175,18 @@ function createConfigTx () {
   echo "####### Generate and submit config tx to add Org3 #############"
   echo "###############################################################"
   docker exec cli scripts/step1org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+  if [ $? -ne 0 ]; then
+    echo "ERROR !!!! Unable to create config tx"
+    exit 1
+  fi
+}
+
+function createConfigTxOrg4 () {
+  echo
+  echo "###############################################################"
+  echo "####### Generate and submit config tx to add Org3 #############"
+  echo "###############################################################"
+  docker exec cli scripts/step1org4.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to create config tx"
     exit 1
@@ -198,6 +222,30 @@ function generateCerts (){
   echo
 }
 
+function generateCertsOrg4 (){
+  which cryptogen
+  if [ "$?" -ne 0 ]; then
+    echo "cryptogen tool not found. exiting"
+    exit 1
+  fi
+  echo
+  echo "###############################################################"
+  echo "##### Generate Org3 certificates using cryptogen tool #########"
+  echo "###############################################################"
+
+  (cd org4-artifacts
+   set -x
+   cryptogen generate --config=./org4-crypto.yaml
+   res=$?
+   set +x
+   if [ $res -ne 0 ]; then
+     echo "Failed to generate certificates..."
+     exit 1
+   fi
+  )
+  echo
+}
+
 # Generate channel configuration transaction
 function generateChannelArtifacts() {
   which configtxgen
@@ -212,7 +260,7 @@ function generateChannelArtifacts() {
    export FABRIC_CFG_PATH=$PWD
    set -x
    configtxgen -printOrg Org3MSP > ../channel-artifacts/org3.json
-   configtxgen -printOrg Orderer3 > ../channel-artifacts/ord3.json
+   configtxgen -printOrg Orderer3MSP > ../channel-artifacts/ord3.json
    res=$?
    set +x
    if [ $res -ne 0 ]; then
@@ -220,10 +268,35 @@ function generateChannelArtifacts() {
      exit 1
    fi
   )
-  cp -r crypto-config/ordererOrganizations org3-artifacts/crypto-config/
+  # collect org3 artifacts
+  cp -r org3-artifacts/crypto-config/* crypto-config
   echo
 }
 
+function generateChannelArtifactsOrg4() {
+  which configtxgen
+  if [ "$?" -ne 0 ]; then
+    echo "configtxgen tool not found. exiting"
+    exit 1
+  fi
+  echo "##########################################################"
+  echo "#########  Generating Org3 config material ###############"
+  echo "##########################################################"
+  (cd org4-artifacts
+   export FABRIC_CFG_PATH=$PWD
+   set -x
+   configtxgen -printOrg Org4MSP > ../channel-artifacts/org4.json
+   configtxgen -printOrg Orderer4MSP > ../channel-artifacts/ord4.json
+   res=$?
+   set +x
+   if [ $res -ne 0 ]; then
+     echo "Failed to generate Org3 config material..."
+     exit 1
+   fi
+  )
+  cp -r org4-artifacts/crypto-config/* crypto-config
+  echo
+}
 
 # If BYFN wasn't run abort
 if [ ! -d crypto-config ]; then

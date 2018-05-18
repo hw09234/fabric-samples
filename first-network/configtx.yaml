@@ -54,7 +54,7 @@ Organizations:
     - &Orderer1
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: Orderer1
+        Name: Orderer1MSP
 
         # ID to load the MSP definition as
         ID: Orderer1MSP
@@ -67,7 +67,7 @@ Organizations:
     - &Orderer2
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: Orderer2
+        Name: Orderer2MSP
 
         # ID to load the MSP definition as
         ID: Orderer2MSP

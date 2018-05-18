@@ -32,8 +32,34 @@ echo "Channel name : "$CHANNEL_NAME
 # import utils
 . scripts/utils.sh
 
+checkOSNAvailability() {
+	#Use orderer's MSP for fetching system channel config block
+	setOrdererGlobalsXXX 1
+
+	local rc=1
+	local starttime=$(date +%s)
+
+	# continue to poll
+	# we either get a successful response, or reach TIMEOUT
+	while test "$(($(date +%s)-starttime))" -lt "30" -a $rc -ne 0
+	do
+		 sleep 3
+		 echo "Attempting to fetch system channel 'testchainid' ...$(($(date +%s)-starttime)) secs"
+		 if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+			 peer channel fetch 0 -o orderer0.ord1.example.com:7050 -c "testchainid" >&log.txt
+		 else
+			 peer channel fetch 0 0_block.pb -o orderer0.ord1.example.com:7050 -c "testchainid" --tls --cafile $ORDERER_CA >&log.txt
+		 fi
+		 test $? -eq 0 && VALUE=$(ls | grep 0_block.pb | wc -l)
+		 test "$VALUE" = "1" && let rc=0
+	done
+	cat log.txt
+	verifyResult $rc "Ordering Service is not available, Please try again ..."
+	echo "===================== Ordering Service is up and running ===================== "
+	echo
+}
+
 createChannel() {
-	sleep 15
 	setGlobals 0 1
 
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
@@ -63,13 +89,15 @@ joinChannel () {
 	    done
 	done
 }
+# checkOSNAvailability
+checkOSNAvailability
 
-## Create channel
+# Create channel
 echo "Creating channel..."
 createChannel
 
 # Join all the peers to the channel
-# echo "Having all peers join the channel..."
+echo "Having all peers join the channel..."
 joinChannel
 
 # Set the anchor peers for each org in the channel
@@ -94,15 +122,15 @@ chaincodeQuery 0 1 100
 
 # Invoke chaincode on peer0.org1
 echo "Sending invoke transaction on peer0.org1..."
-#chaincodeInvoke 0 1
+chaincodeInvoke 0 1
 
-## Install chaincode on peer1.org2
+# Install chaincode on peer1.org2
 echo "Installing chaincode on peer1.org2..."
-#installChaincode 1 2
+installChaincode 1 2
 
 # Query on chaincode on peer1.org2, check if the result is 90
 echo "Querying chaincode on peer1.org2..."
-#chaincodeQuery 1 2 90
+chaincodeQuery 1 2 90
 
 echo
 echo "========= All GOOD, BYFN execution completed =========== "

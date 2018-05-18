@@ -28,6 +28,10 @@ setOrdererGlobalsXXX() {
         CORE_PEER_LOCALMSPID="Orderer2MSP"
         CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/ord2.example.com/orderers/orderer01.ord2.example.com/msp/tlscacerts/tlsca.ord2.example.com-cert.pem
         CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/ord2.example.com/users/Admin@ord2.example.com/msp
+    elif [ $ORG -eq 3 ] ; then
+        CORE_PEER_LOCALMSPID="Orderer3MSP"
+        CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/ord2.example.com/orderers/orderer01.ord3.example.com/msp/tlscacerts/tlsca.ord3.example.com-cert.pem
+        CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/ord3.example.com/users/Admin@ord3.example.com/msp
     else
         echo "================== ERROR !!! ORG Unknown =================="
     fi
