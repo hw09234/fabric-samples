@@ -24,11 +24,14 @@ Profiles:
                 - *Orderer2
             Capabilities:
                 <<: *OrdererCapabilities
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Org1
         Consortiums:
             SampleConsortium:
                 Organizations:
                     - *Org1
-                    - *Org2
     TwoOrgsChannel:
         Consortium: SampleConsortium
         Application:

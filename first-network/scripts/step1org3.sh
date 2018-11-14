@@ -37,7 +37,7 @@ echo "========= Creating config transaction to add org3 to network =========== "
 echo
 
 echo "Installing jq"
-apt-get -y update && apt-get -y install jq
+# apt-get -y update && apt-get -y install jq
 
 # Fetch the config for the channel, writing it to config.json
 fetchChannelConfig ${CHANNEL_NAME} config.json
@@ -71,13 +71,13 @@ echo
 # ANY Policy needs 1 signature by any org
 # CUSTOM Policy needs 1 signature by only one of genesis org
 
-signConfigtxAsPeerOrg 1 org3_update_in_envelope.pb
+# signConfigtxAsPeerOrg 1 org3_update_in_envelope.pb
 signConfigtxAsOrdererOrg 1 org3_update_in_envelope.pb
-signConfigtxAsOrdererOrg 2 org3_update_in_envelope.pb
+# signConfigtxAsOrdererOrg 2 org3_update_in_envelope.pb
 echo
 echo "========= Submitting transaction from a different peer (peer0.org2) which also signs it ========= "
 echo
-setGlobals 0 2
+setGlobals 0 1
 set -x
 peer channel update -f org3_update_in_envelope.pb -c ${CHANNEL_NAME} -o orderer0.ord1.example.com:7050 --tls --cafile ${ORDERER_CA}
 set +x

@@ -44,19 +44,20 @@ checkOSNAvailability() {
 	while test "$(($(date +%s)-starttime))" -lt "30" -a $rc -ne 0
 	do
 		 sleep 3
-		 echo "Attempting to fetch system channel 'testchainid' ...$(($(date +%s)-starttime)) secs"
+		 echo "Attempting to fetch system channel 'cbc' ...$(($(date +%s)-starttime)) secs"
 		 if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-			 peer channel fetch 0 -o orderer0.ord1.example.com:7050 -c "testchainid" >&log.txt
+			 peer channel fetch 0 cbc.block -o orderer0.ord1.example.com:7050 -c "cbc" >&log.txt
 		 else
-			 peer channel fetch 0 0_block.pb -o orderer0.ord1.example.com:7050 -c "testchainid" --tls --cafile $ORDERER_CA >&log.txt
+			 peer channel fetch 0 cbc.block -o orderer0.ord1.example.com:7050 -c "cbc" --tls --cafile $ORDERER_CA >&log.txt
 		 fi
-		 test $? -eq 0 && VALUE=$(ls | grep 0_block.pb | wc -l)
+		 test $? -eq 0 && VALUE=$(ls | grep cbc.block | wc -l)
 		 test "$VALUE" = "1" && let rc=0
 	done
 	cat log.txt
 	verifyResult $rc "Ordering Service is not available, Please try again ..."
 	echo "===================== Ordering Service is up and running ===================== "
 	echo
+	cp cbc.block channel-artifacts
 }
 
 createChannel() {
@@ -80,7 +81,7 @@ createChannel() {
 }
 
 joinChannel () {
-	for org in 1 2; do
+	for org in 1; do
 	    for peer in 0 1; do
 		joinChannelWithRetry $peer $org
 		echo "===================== peer${peer}.org${org} joined on the channel \"$CHANNEL_NAME\" ===================== "
@@ -94,28 +95,28 @@ checkOSNAvailability
 
 # Create channel
 echo "Creating channel..."
-createChannel
+# createChannel
 
 # Join all the peers to the channel
 echo "Having all peers join the channel..."
 joinChannel
 
 # Set the anchor peers for each org in the channel
-echo "Updating anchor peers for org1..."
-updateAnchorPeers 0 1
-echo "Updating anchor peers for org2..."
-updateAnchorPeers 0 2
+#echo "Updating anchor peers for org1..."
+#updateAnchorPeers 0 1
+# echo "Updating anchor peers for org2..."
+# updateAnchorPeers 0 2
 
 ## Install chaincode on peer0.org1 and peer0.org2
 echo "Installing chaincode on peer0.org1..."
 installChaincode 0 1
 echo "Install chaincode on peer0.org2..."
-installChaincode 0 2
+installChaincode 1 1
 
 # Instantiate chaincode on peer0.org2
 echo "Instantiating chaincode on peer0.org2..."
-instantiateChaincode 0 2
-
+instantiateChaincode 0 1
+exit
 # Query chaincode on peer0.org1
 echo "Querying chaincode on peer0.org1..."
 chaincodeQuery 0 1 100
@@ -124,13 +125,13 @@ chaincodeQuery 0 1 100
 echo "Sending invoke transaction on peer0.org1..."
 chaincodeInvoke 0 1
 
-# Install chaincode on peer1.org2
-echo "Installing chaincode on peer1.org2..."
-installChaincode 1 2
+# # Install chaincode on peer1.org2
+# echo "Installing chaincode on peer1.org2..."
+# installChaincode 1 1
 
 # Query on chaincode on peer1.org2, check if the result is 90
 echo "Querying chaincode on peer1.org2..."
-chaincodeQuery 1 2 90
+chaincodeQuery 1 1 90
 
 echo
 echo "========= All GOOD, BYFN execution completed =========== "
