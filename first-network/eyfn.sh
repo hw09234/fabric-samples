@@ -97,52 +97,61 @@ function networkUp () {
     generateChannelArtifacts
     createConfigTx
   fi
-  
-  # start org3 peers
-  if [ "${IF_COUCHDB}" == "couchdb" ]; then
-      IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
-  else
-      IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG3 up -d 2>&1
-  fi
-  if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to start Org3 network"
-    exit 1
-  fi
-  echo
   echo "###############################################################"
-  echo "############### Have Org3 peers join network ##################"
+  echo "############### Have Org3 create channel     ##################"
   echo "###############################################################"
-  docker exec cli ./scripts/step2org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+  #generateOrg3ChannelArtifacts
+  docker exec cli ./scripts/creatorg3channel.sh
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to have Org3 peers join network"
-    exit 1
-  fi
-  echo
-  echo "###############################################################"
-  echo "##### Upgrade chaincode to have Org3 peers on the network #####"
-  echo "###############################################################"
-  docker exec cli ./scripts/step3org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
-  if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to add Org3 peers on network"
-    exit 1
-  fi
-  # finish by running the test
-  docker exec cli ./scripts/testorg3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
-  if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to run test"
+    echo "ERROR !!!! Unable to Have Org3 create channel"
     exit 1
   fi
 
+  # start org3 peers
+#  if [ "${IF_COUCHDB}" == "couchdb" ]; then
+#      IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
+#  else
+#      IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG3 up -d 2>&1
+#  fi
+#  if [ $? -ne 0 ]; then
+#    echo "ERROR !!!! Unable to start Org3 network"
+#    exit 1
+#  fi
   echo
-  echo "###############################################################"
-  echo "#####              Adding Org4 to network                 #####"
-  echo "###############################################################"
-  #generate org4 artifacts and add org4 into config block
-  if [ ! -d "org4-artifacts/crypto-config" ]; then
-    generateCertsOrg4
-    generateChannelArtifactsOrg4
-    createConfigTxOrg4
-  fi
+#  echo "###############################################################"
+#  echo "############### Have Org3 peers join network ##################"
+#  echo "###############################################################"
+#  docker exec cli ./scripts/step2org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+#  if [ $? -ne 0 ]; then
+#    echo "ERROR !!!! Unable to have Org3 peers join network"
+#    exit 1
+#  fi
+#  echo
+#  echo "###############################################################"
+#  echo "##### Upgrade chaincode to have Org3 peers on the network #####"
+#  echo "###############################################################"
+#  docker exec cli ./scripts/step3org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+#  if [ $? -ne 0 ]; then
+#    echo "ERROR !!!! Unable to add Org3 peers on network"
+#    exit 1
+#  fi
+  # finish by running the test
+#  docker exec cli ./scripts/testorg3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT
+#  if [ $? -ne 0 ]; then
+#    echo "ERROR !!!! Unable to run test"
+#    exit 1
+#  fi
+
+#  echo
+#  echo "###############################################################"
+#  echo "#####              Adding Org4 to network                 #####"
+#  echo "###############################################################"
+#  #generate org4 artifacts and add org4 into config block
+#  if [ ! -d "org4-artifacts/crypto-config" ]; then
+#    generateCertsOrg4
+#    generateChannelArtifactsOrg4
+#    createConfigTxOrg4
+#  fi
 
 }
 
@@ -295,6 +304,28 @@ function generateChannelArtifactsOrg4() {
    fi
   )
   cp -r org4-artifacts/crypto-config/* crypto-config
+  echo
+}
+
+function generateOrg3ChannelArtifacts() {
+  which configtxgen
+  if [ "$?" -ne 0 ]; then
+    echo "configtxgen tool not found. exiting"
+    exit 1
+  fi
+
+  echo
+  echo "#################################################################"
+  echo "### Generating channel configuration transaction 'channel.tx' ###"
+  echo "#################################################################"
+  set -x
+  configtxgen -profile Org3OrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID mychannel
+  res=$?
+  set +x
+  if [ $res -ne 0 ]; then
+    echo "Failed to generate channel configuration transaction..."
+    exit 1
+  fi
   echo
 }
 
